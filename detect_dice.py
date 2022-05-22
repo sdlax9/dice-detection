@@ -6,7 +6,7 @@ from sklearn.cluster import DBSCAN
 params = cv2.SimpleBlobDetector_Params()
 
 params.filterByInertia
-params.minInertiaRatio = 0.6
+params.minInertiaRatio = 0.7
 
 detector = cv2.SimpleBlobDetector_create(params)
 
@@ -31,7 +31,7 @@ def get_dice_from_blobs(blobs):
 
     if len(X) > 0:
         # Important to set min_sample to 0, as a dice may only have one dot
-        clustering = DBSCAN(eps=70, min_samples=1).fit(X)
+        clustering = DBSCAN(eps=100, min_samples=1).fit(X)
 
         # Find the largest label assigned + 1, that's the number of dice found
         num_dice = max(clustering.labels_) + 1
@@ -72,7 +72,11 @@ def overlay_info(frame, dice, blobs):
                      int(d[2] + textsize[1] / 2)),
                     cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
 
-cap = cv2.VideoCapture('/Users/jwahl/Desktop/jupyter_notebooks/dice_many.MOV')
+    cv2.putText(frame, 'Dice: ' + str(len(dice)), (50, 1000), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
+    cv2.putText(frame, 'Roll: ' + str(len(blobs)), (50, 1050), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
+
+#cap = cv2.VideoCapture('/Users/jwahl/Desktop/jupyter_notebooks/dice_many.MOV')
+cap = cv2.VideoCapture(1)
 
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
