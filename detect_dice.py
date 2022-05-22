@@ -10,6 +10,10 @@ params.minInertiaRatio = 0.7
 
 detector = cv2.SimpleBlobDetector_create(params)
 
+LEFT_OFFSET = 50
+RIGHT_OFFSET = 100
+BOTTOM_OFFSET = 50
+
 def get_blobs(frame):
     frame_blurred = cv2.medianBlur(frame, 7)
     frame_gray = cv2.cvtColor(frame_blurred, cv2.COLOR_BGR2GRAY)
@@ -52,7 +56,7 @@ def get_dice_from_blobs(blobs):
         return []
 
 
-def overlay_info(frame, dice, blobs):
+def overlay_info(frame, dice, blobs, frame_width=0, frame_height=0):
     # Overlay blobs
     for b in blobs:
         pos = b.pt
@@ -71,40 +75,56 @@ def overlay_info(frame, dice, blobs):
                     (int(d[1] - textsize[0] / 2),
                      int(d[2] + textsize[1] / 2)),
                     cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
-
-    cv2.putText(frame, 'Dice: ' + str(len(dice)), (50, 1000), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
-    cv2.putText(frame, 'Roll: ' + str(len(blobs)), (50, 1050), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
-
-#cap = cv2.VideoCapture('/Users/jwahl/Desktop/jupyter_notebooks/dice_many.MOV')
-cap = cv2.VideoCapture(1)
-
-frame_width = int(cap.get(3))
-frame_height = int(cap.get(4))
-
-#out = cv2.VideoWriter('dice_3_many.avi',
-#    cv2.VideoWriter_fourcc(*"MJPG"), 30,(frame_width, frame_height))
-
-while(True):
-    # Grab the latest image from the video feed
-    ret, frame = cap.read()
     
-    if ret:
-        # We'll define these later
-        blobs = get_blobs(frame)
-        dice = get_dice_from_blobs(blobs)
-        out_frame = overlay_info(frame, dice, blobs)
+    # Overlay pip and dice count
+    pip_count = len(blobs)
+    dice_count = len(dice)
+    cv2.putText(
+        frame, 'Dice: ' + str(dice_count), (LEFT_OFFSET, frame_height-(BOTTOM_OFFSET*2)), 
+        cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2
+    )
+    cv2.putText(
+        frame, 'Roll: ' + str(pip_count), (LEFT_OFFSET, frame_height-BOTTOM_OFFSET), 
+        cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2
+    )
 
-        cv2.imshow("frame", frame)
-        #out.write(frame)
-        res = cv2.waitKey(1)
+def detect_dice(source):
+    #cap = cv2.VideoCapture('/Users/jwahl/Desktop/jupyter_notebooks/dice_many.MOV')
+    cap = cv2.VideoCapture(source)
 
-        # Stop if the user presses "q"
-        if res & 0xFF == ord('q'):
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    print(frame_width, frame_height)
+    #out = cv2.VideoWriter('dice_3_many.avi',
+    #    cv2.VideoWriter_fourcc(*"MJPG"), 30,(frame_width, frame_height))
+
+    while(True):
+        # Grab the latest image from the video feed
+        ret, frame = cap.read()
+        
+        if ret:
+            # We'll define these later
+            blobs = get_blobs(frame)
+            dice = get_dice_from_blobs(blobs)
+            out_frame = overlay_info(
+                frame, dice, blobs, 
+                frame_width=frame_width, frame_height=frame_height
+            )
+
+            cv2.imshow("frame", frame)
+            #out.write(frame)
+            res = cv2.waitKey(1)
+
+            # Stop if the user presses "q"
+            if res & 0xFF == ord('q'):
+                break
+        else:
             break
-    else:
-        break
 
-# When everything is done, release the capture
-cap.release()
-#out.release()
-cv2.destroyAllWindows()
+    # When everything is done, release the capture
+    cap.release()
+    #out.release()
+    cv2.destroyAllWindows()
+
+if __name__ == '__main__':
+    detect_dice(1)
